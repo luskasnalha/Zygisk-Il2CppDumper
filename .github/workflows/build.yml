@@ -1,27 +1,44 @@
 name: Build
+
 on:
   workflow_dispatch:
-      inputs:
-        package_name:
-          description: "Package name of the game:"
-          required: true
+    inputs:
+      package_name:
+        description: "Package name of the game:"
+        required: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-java@v4
-      with:
-        distribution: temurin
-        java-version: 11
-        cache: gradle
-    - run: |
-        chmod +x ./gradlew
-        sed -i 's/moduleDescription = "/moduleDescription = "(${{ github.event.inputs.package_name }}) /g' module.gradle
-        sed -i "s/com.game.packagename/${{ github.event.inputs.package_name }}/g" module/src/main/cpp/game.h
-        ./gradlew :module:assembleRelease
-    - uses: actions/upload-artifact@v4
-      with:
-        name: zygisk-il2cppdumper
-        path: out/magisk_module_release/
+      # Faz o checkout do código no repositório
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Configura o Java com a versão 11
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+          cache: gradle
+
+      # Modifica arquivos e compila o projeto
+      - name: Modify files and build
+        run: |
+          chmod +x ./gradlew
+          # Adiciona a descrição do módulo no arquivo module.gradle
+          sed -i 's/moduleDescription = "/moduleDescription = "(${{ github.event.inputs.package_name }}) /g' module.gradle
+          # Substitui o nome do pacote no arquivo game.h
+          sed -i "s/com.game.packagename/${{ github.event.inputs.package_name }}/g" module/src/main/cpp/game.h
+          # Executa o Gradle para compilar o projeto
+          ./gradlew :module:assembleRelease
+
+      # Faz o upload do artefato gerado
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zygisk-il2cppdumper
+          path: out/magisk_module_release/
+
